@@ -151,6 +151,14 @@ class GetInfo:
         return info.graphics.normalizedCarPosition
 
     @property
+    def performance_meter(self):
+        '''
+        Returns the time difference on the current point on track.
+        (Negative is better.)
+        '''
+        return info.physics.performanceMeter
+
+    @property
     def heading(self):
         '''
         Angle of the car
