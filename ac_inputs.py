@@ -1,8 +1,14 @@
+import configparser
+import math
 import os
 import platform
 import sys
+import time
+import tkinter as tk
+
+from PIL import Image, ImageOps, ImageTk
+
 from sim_info import info
-import configparser
 
 # print(info.graphics.tyreCompound, info.physics.rpms, info.static.playerNick)
 
@@ -44,6 +50,25 @@ def read_map_config(path):
     return parameters
 
 
+def get_track_attributes():
+    assetto_corsa_root = 'D:\\SteamLibrary\\steamapps\\common\\assettocorsa\\'
+    tracks_root = 'content\\tracks\\'
+
+    current_track = f'{assetto_corsa_root}{tracks_root}{gi.track_name[0]}'
+    if gi.track_name[1]:
+        current_track = f'{current_track}\\{gi.track_name[1]}'
+
+    track_map_path = f'{current_track}\\map.png'
+    map_data_path = f'{current_track}\\data\\map.ini'
+    map_data = read_map_config(map_data_path)
+    map_image = Image.open(track_map_path)
+
+    map_ = {'map_data': map_data,
+            'map_image': map_image}
+
+    return map_
+
+
 def count_attributes(cls):
     return len([attr for attr in dir(cls) if not attr.startswith('__') and not callable(getattr(cls, attr))])
 
@@ -52,16 +77,7 @@ class GetInfo:
     def __init__(self) -> None:
         pass
 
-    @property
-    def track_name(self):
-        '''
-        Name of the track and layout
-
-        [Track, Layout]
-        '''
-        return [info.static.track, info.static.trackConfiguration][:]
-
-    @property
+    @ property
     def track_name(self):
         '''
         Name of the track and layout.
@@ -71,17 +87,17 @@ class GetInfo:
         '''
         return [info.static.track, info.static.trackConfiguration]
 
-    @property
+    @ property
     def car_name(self):
         '''Model of the car'''
         return info.static.carModel
 
-    @property
+    @ property
     def auto_shifter_on(self):
         '''Returns if auto shifter is enabled'''
         return info.physics.autoShifterOn
 
-    @property
+    @ property
     def wheel_slip(self):
         '''
         Slippage of the wheels (I think above 0.5 is bad)
@@ -90,7 +106,7 @@ class GetInfo:
         '''
         return info.physics.wheelSlip[:]
 
-    @property
+    @ property
     def steer_angle(self):
         '''
         Angle of steer
@@ -99,27 +115,27 @@ class GetInfo:
         '''
         return info.physics.steerAngle
 
-    @property
+    @ property
     def speed(self):
         '''Speed in KM/h'''
         return info.physics.speedKmh
 
-    @property
+    @ property
     def wheels_offtrack(self):
         '''Returns the number of wheels that are currently off the track.'''
         return info.physics.numberOfTyresOut
 
-    @property
+    @ property
     def car_damage(self):
         '''
-        Returns the damage status of the car. 
+        Returns the damage status of the car.
         (Above 100 stability issues, Around 150 is death)
 
         [Front, Rear, Left, Right, Highest Damage]
         '''
         return info.physics.carDamage[:]
 
-    @property
+    @ property
     def last_lap(self):
         '''
         Time of the last lap as an integer.
@@ -130,7 +146,7 @@ class GetInfo:
         '''
         return info.graphics.iLastTime
 
-    @property
+    @ property
     def best_lap(self):
         '''
         Time of the best lap as an integer.
@@ -141,7 +157,7 @@ class GetInfo:
         '''
         return info.graphics.bestTime
 
-    @property
+    @ property
     def track_completion(self):
         '''
         Returns the completed track ratio from 0 to 1.
@@ -150,7 +166,7 @@ class GetInfo:
         '''
         return info.graphics.normalizedCarPosition
 
-    @property
+    @ property
     def performance_meter(self):
         '''
         Returns the time difference on the current point on track.
@@ -158,7 +174,7 @@ class GetInfo:
         '''
         return info.physics.performanceMeter
 
-    @property
+    @ property
     def heading(self):
         '''
         Angle of the car
@@ -167,7 +183,7 @@ class GetInfo:
         '''
         return info.physics.heading
 
-    @property
+    @ property
     def coordinates(self):
         '''Returns [x,y,z]'''
         return info.graphics.carCoordinates[:]
@@ -175,20 +191,11 @@ class GetInfo:
 
 gi = GetInfo()
 
-assetto_corsa_root = 'D:\\SteamLibrary\\steamapps\\common\\assettocorsa\\'
-tracks_root = 'content\\tracks\\'
-
-current_track = f'{assetto_corsa_root}{tracks_root}{gi.track_name[0]}'
-if gi.track_name[1]:
-    current_track = f'{current_track}\\{gi.track_name[1]}'
-
-track_map = f'{current_track}\\map.png'
-track_map_data = f'{current_track}\\data\\map.ini'
+current_track = get_track_attributes()
 
 
 if __name__ == '__main__':
     print(f'Track: {gi.track_name}')
     print(f'Car: {gi.car_name}')
     print(f'Class attribute count: {count_attributes(gi)}')
-
-    # print(read_map_config(track_map_data))
+    print(current_track['map_data'])
