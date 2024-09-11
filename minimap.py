@@ -20,32 +20,70 @@ class MinimapApp:
         self.arrow_image_tk = ImageTk.PhotoImage(self.arrow_image)
         self.arrow_on_canvas = None
 
+        self.sensors_on_canvas = []
+
         self.update_minimap()
 
     def update_minimap(self):
-        # Clear the previous arrow
         if self.arrow_on_canvas:
             self.canvas.delete(self.arrow_on_canvas)
+        for sensor in self.sensors_on_canvas:
+            self.canvas.delete(sensor)
+        self.sensors_on_canvas.clear()
 
-        # Get player coordinates and heading
         coords = gi.coordinates
         heading = gi.heading
 
-        # Convert player coordinates to canvas coordinates
         player_x = map_data['x_offset'] + coords[0] * map_data['scale_factor']
         player_z = map_data['z_offset'] + coords[2] * map_data['scale_factor']
 
-        # Calculate rotation for arrow
         arrow_image_rotated = self.arrow_image.rotate(
             math.degrees(-heading), expand=True)
         self.arrow_image_tk = ImageTk.PhotoImage(arrow_image_rotated)
 
-        # Place the arrow on the canvas
         self.arrow_on_canvas = self.canvas.create_image(
             player_x, player_z, anchor=tk.CENTER, image=self.arrow_image_tk)
 
-        # Schedule next update
-        self.root.after(50, self.update_minimap)  # Update every 0.05 seconds
+        sensors = gi.get_sensors(
+            min_sensor_distance=10, min_sensor_count=15, FOV_degrees=180)
+
+        for sensor in sensors:
+            sensor_x = map_data['x_offset'] + \
+                sensor[0] * map_data['scale_factor']
+            sensor_z = map_data['z_offset'] + \
+                sensor[1] * map_data['scale_factor']
+
+            if self.is_on_track(sensor_x, sensor_z):
+                sensor_color = "green"
+            else:
+                sensor_color = "red"
+
+            sensor_on_canvas = self.canvas.create_oval(
+                sensor_x - 3, sensor_z - 3, sensor_x + 3, sensor_z + 3, fill=sensor_color
+            )
+            self.sensors_on_canvas.append(sensor_on_canvas)
+
+        self.root.after(50, self.update_minimap)
+
+    def is_on_track(self, x, z):
+        # Check if coordinates are within the bounds of the map image
+        if 0 <= int(x) < map_image.width and 0 <= int(z) < map_image.height:
+            try:
+
+                pixel_color = map_image.getpixel((int(x), int(z)))
+
+                alpha_value = pixel_color[3]
+
+                if alpha_value == 255:
+                    return True
+                else:
+                    return False
+
+            except Exception as e:
+                print(f"Error checking pixel color at ({x}, {z}):", e)
+                return False
+        else:
+            return False
 
 
 gi = GetInfo()

@@ -5,6 +5,7 @@ import platform
 import sys
 import time
 import tkinter as tk
+import numpy as np
 
 from PIL import Image, ImageOps, ImageTk
 
@@ -187,6 +188,27 @@ class GetInfo:
     def coordinates(self):
         '''Returns [x,y,z]'''
         return info.graphics.carCoordinates[:]
+
+    def get_sensors(self, min_sensor_distance=10, min_sensor_count=5, FOV_degrees=90):
+        coords = self.coordinates
+        heading = self.heading
+
+        FOV_radians = np.radians(FOV_degrees)
+
+        sensor_distance = max(min_sensor_distance *
+                              self.speed/20, min_sensor_distance)
+
+        sensor_count = max(
+            int(np.ceil(min_sensor_count * sensor_distance/25) // 2 * 2 + 1), min_sensor_count)
+
+        angles = np.linspace(-FOV_radians/2, FOV_radians/2,
+                             sensor_count) + np.radians(90)  # offset is due to headingbeing off by -90 degrees
+        sensors = []
+        for angle in angles:
+            sensor_x = coords[0] + sensor_distance * math.cos(heading + angle)
+            sensor_z = coords[2] + sensor_distance * math.sin(heading + angle)
+            sensors.append((sensor_x, sensor_z))
+        return sensors
 
 
 gi = GetInfo()
