@@ -1,4 +1,5 @@
 /docs
+/devlogs
 /__pycache__
 ac_env.py
 agent_train.py
