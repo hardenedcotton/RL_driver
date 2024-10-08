@@ -23,6 +23,7 @@ class MinimapApp:
         self.arrow_image = Image.open("assets/arrow32.png")
         self.arrow_image_tk = ImageTk.PhotoImage(self.arrow_image)
         self.arrow_on_canvas = None
+        self.angle_beam = None
 
         self.sensors_on_canvas = []
         self.sensor_info = self.canvas.create_text(
@@ -68,6 +69,31 @@ class MinimapApp:
             )
             self.sensors_on_canvas.append(sensor_on_canvas)
 
+    def draw_mean_angle_dot(self, triggered_sensors):
+        if self.angle_beam:
+            self.canvas.delete(self.angle_beam)
+
+        mean_angle = np.radians(triggered_sensors[-1])
+        beam_length = triggered_sensors[0]*1.2
+
+        end_x = self.gi.map_data['x_offset'] + \
+            self.gi.coordinates[0] + beam_length * \
+            np.cos(self.gi.heading + mean_angle + np.radians(90)) * \
+            self.gi.map_data['scale_factor']
+
+        end_z = self.gi.map_data['z_offset'] + \
+            self.gi.coordinates[2] + beam_length * \
+            np.sin(self.gi.heading + mean_angle + np.radians(90)) * \
+            self.gi.map_data['scale_factor']
+
+        # # Calculate the end point of the beam
+        # end_x = player_x + beam_length * math.cos(mean_angle)
+        # end_z = player_z + beam_length * math.sin(mean_angle)
+
+        # Draw the beam and store its ID
+        self.angle_beam = self.canvas.create_oval(
+            end_x-4, end_z-4, end_x+4, end_z+4, fill="blue", width=2)
+
     def create_data_on_canvas(self):
 
         self.data_text_items = []
@@ -97,7 +123,7 @@ class MinimapApp:
 
         data = {
             'sensor_distance': sensor_distance,
-            'sensor_mean_angle': sensor_mean_angle,
+            'sensor_mean_angle_gaus': sensor_mean_angle,
             'performance_meter': self.gi.performance_meter,
             'speed': self.gi.speed,
             'steer_angle': self.gi.steer_angle,
@@ -116,10 +142,11 @@ class MinimapApp:
     def update_minimap(self):
 
         all_sensors, triggered_sensors = self.gi.get_sensors(
-            min_sensor_distance=10, min_sensor_count=5, FOV_degrees=90)
+            min_sensor_distance=50, min_sensor_count=10, FOV_degrees=180)
 
         self.draw_car()
         self.draw_sensors(all_sensors, triggered_sensors)
+        self.draw_mean_angle_dot(triggered_sensors)
         self.update_data_on_canvas(triggered_sensors)
 
         self.root.after(50, self.update_minimap)

@@ -212,7 +212,7 @@ class GetInfo:
         FOV_radians = np.radians(FOV_degrees)
 
         sensor_distance = max(min_sensor_distance *
-                              self.speed/20, min_sensor_distance)
+                              self.speed/50, min_sensor_distance)
 
         sensor_count = max(
             int(np.ceil(min_sensor_count * sensor_distance/25) // 2 * 2 + 1), min_sensor_count)
@@ -221,12 +221,14 @@ class GetInfo:
                              sensor_count) + np.radians(90)  # offset is due to heading being off by -90 degrees
         # FIXME Sensor drawer has a problem, i shouldn't really offset it
         # angles = np.arcsin(angles) * FOV_radians / 2
-        distance_offset = self.gauss(
-            sensor_count, 500/self.speed, (.25, 1))
+        # distance_offset = self.gauss(
+        #     sensor_count, 500/self.speed, (.25, 1))
+        distance_offset = [1]*sensor_count
         # FIXME The top of the gaussian is sparse, fix it
         #
         sensors = []
         triggered_sensors = [sensor_distance]
+        triggered_sensors_gauss = []
         for idx, angle in enumerate(angles):
             sensor_x = self.map_data['x_offset'] + \
                 coords[0] + sensor_distance * distance_offset[idx] * \
@@ -239,11 +241,18 @@ class GetInfo:
                 sensor_x, sensor_z)
 
             sensors.append((sensor_x, sensor_z, angle))
+            gausser = self.gauss(sensor_count, sensor_count)
+
             if is_sensor_on_track:
                 triggered_sensors.append(angle)
+                triggered_sensors_gauss.append(angle*gausser[idx])
 
         sensor_mean_angle = np.degrees(
             np.mean(triggered_sensors[1:]))-90
+        # FIXME dot appears on the wrong side with gauss
+
+        # sensor_mean_angle = np.degrees(
+        #     np.mean(triggered_sensors_gauss[1:]))-90
 
         if np.isnan(sensor_mean_angle):
             sensor_mean_angle = self.prev_sensor_mean_angle
