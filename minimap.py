@@ -86,11 +86,6 @@ class MinimapApp:
             np.sin(self.gi.heading + mean_angle + np.radians(90)) * \
             self.gi.map_data['scale_factor']
 
-        # # Calculate the end point of the beam
-        # end_x = player_x + beam_length * math.cos(mean_angle)
-        # end_z = player_z + beam_length * math.sin(mean_angle)
-
-        # Draw the beam and store its ID
         self.angle_beam = self.canvas.create_oval(
             end_x-4, end_z-4, end_x+4, end_z+4, fill="blue", width=2)
 
